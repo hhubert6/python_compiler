@@ -6,6 +6,7 @@ from scanner import Scanner
 class Mparser(Parser):
     tokens = Scanner.tokens
     debugfile = 'parser.out'
+    had_error = False
 
     precedence = (
         ("nonassoc", 'IFX'),
@@ -21,6 +22,8 @@ class Mparser(Parser):
 
     @_('instruction program')
     def program(self, p):
+        if self.had_error:
+            return None
         p.program.add_instr(p.instruction)
         return p.program
 
@@ -56,16 +59,16 @@ class Mparser(Parser):
     def ref(self, p):
         return AST.Variable(p.lineno, p.ID)
 
-    @_('ID "[" indexes "]"')
+    @_('ID "[" indices "]"')
     def ref(self, p):
-        return AST.Ref(p.lineno, AST.Variable(p.lineno, p.ID), p.indexes)
+        return AST.Ref(p.lineno, AST.Variable(p.lineno, p.ID), p.indices)
 
-    @_('expr "," indexes')
-    def indexes(self, p):
-        return [p.expr, *p.indexes]
+    @_('expr "," indices')
+    def indices(self, p):
+        return [p.expr, *p.indices]
 
     @_('expr')
-    def indexes(self, p):
+    def indices(self, p):
         return [p.expr]
 
     #
@@ -118,17 +121,9 @@ class Mparser(Parser):
     def loop_instr(self, p):
         return AST.Error(p.lineno, "Syntax error in while instruction. Bad expression")
     
-    @_('FOR ID "=" integer ":" integer instruction')
+    @_('FOR ID "=" expr ":" expr instruction')
     def loop_instr(self, p):
-        return AST.ForLoop(p.lineno, AST.Variable(p.lineno, p.ID), AST.Range(p.lineno, p.integer0, p.integer1), p.instruction)
-
-    @_('ID')
-    def integer(self, p):
-        return AST.Variable(p.lineno, p.ID)
-
-    @_('INTNUM')
-    def integer(self, p):
-        return AST.IntNum(p.lineno, p.INTNUM)
+        return AST.ForLoop(p.lineno, AST.Variable(p.lineno, p.ID), AST.Range(p.lineno, p.expr0, p.expr1), p.instruction)
 
     #
     # ------- BLOCK --------
@@ -234,3 +229,9 @@ class Mparser(Parser):
     def string(self, p):
         return AST.String(p.lineno, p.STRING)
 
+    def error(self, p):
+        self.had_error = True
+        if p:
+            print(f"Syntax error at line {p.lineno}: token=({p.type}, '{p.value}')")
+        else:
+            print("Unexpected end of input")

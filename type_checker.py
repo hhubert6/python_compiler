@@ -21,6 +21,7 @@ ttype['-']['int']['int'] = 'int'
 ttype['-']['int']['float'] = 'float'
 ttype['-']['float']['int'] = 'float'
 ttype['-']['float']['float'] = 'float'
+ttype['-']['vector']['vector'] = 'vector'
 
 ttype['*']['int']['int'] = 'int'
 ttype['*']['int']['float'] = 'float'
@@ -77,16 +78,19 @@ ttype['+=']['int']['float'] = 'float'
 ttype['+=']['float']['int'] = 'float'
 ttype['+=']['float']['float'] = 'float'
 ttype['+=']['str']['str'] = 'str'
+ttype['+=']['vector']['vector'] = 'vector'
 
 ttype['-=']['int']['int'] = 'int'
 ttype['-=']['int']['float'] = 'float'
 ttype['-=']['float']['int'] = 'float'
 ttype['-=']['float']['float'] = 'float'
+ttype['-=']['vector']['vector'] = 'vector'
 
 ttype['*=']['int']['int'] = 'int'
 ttype['*=']['int']['float'] = 'float'
 ttype['*=']['float']['int'] = 'float'
 ttype['*=']['float']['float'] = 'float'
+ttype['*=']['vector']['vector'] = 'vector'
 
 ttype['/=']['int']['int'] = 'int'
 ttype['/=']['int']['float'] = 'float'
@@ -154,11 +158,11 @@ class TypeChecker(NodeVisitor):
         if symbol is None:
             return
 
-        if len(symbol.dims) < len(node.indexes):
+        if len(symbol.dims) < len(node.indices):
             self.errors.append(f"[line: {node.lineno}] Access with wrong dimensions (too many indices)")
             return symbol.elements_type
 
-        for i, index in enumerate(node.indexes):
+        for i, index in enumerate(node.indices):
             index_type = self.visit(index)
             if index_type != 'int':
                 self.errors.append(f"[line: {node.lineno}] Type error in vector access (indices must be 'int') got '{index_type}'")
@@ -203,8 +207,8 @@ class TypeChecker(NodeVisitor):
                 isinstance(node.right, AST.UnaryExpr) or isinstance(node.right, AST.Vector):
                 right_dims = node.right.dims
 
-            if (op == '*' and left_dims[1] != right_dims[0]) \
-                or (op != '*' and left_dims != right_dims):
+            if (op == '*' and left_dims and right_dims and left_dims[1] != right_dims[0]) \
+                or (op != '*' and left_dims and right_dims and left_dims != right_dims):
                     self.errors.append(
                         f"[line: {node.lineno}] Type error in binary expression (wrong dimensions): {left_dims} {op} {right_dims}"
                     )

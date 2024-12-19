@@ -78,7 +78,10 @@ class Scanner(Lexer):
         return t
 
     # strings
-    STRING = r'".*?"'
+    @_(r'".*?"')
+    def STRING(self, t):
+        t.value = t.value[1:-1]
+        return t
 
     # Define a rule so we can track line numbers
     @_(r"\n+")

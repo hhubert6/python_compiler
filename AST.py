@@ -8,6 +8,9 @@ class Node(object):
     def printTree(self, indent=0):
         pass
 
+    def accept(self, visitor, *args, **kwargs):
+        return visitor.visit(self, *args, **kwargs)
+
 
 # --------- TYPES ---------
 
@@ -35,7 +38,7 @@ class String(Node):
 @dataclass
 class Ref(Node):
     variable: Variable
-    indexes: list[Node]
+    indices: list[Node]
 
 
 @dataclass
